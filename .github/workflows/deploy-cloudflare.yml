@@ -10,7 +10,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     env:
-      VITE_NEON_AUTH_URL: ${{ secrets.NEON_AUTH_URL }}
+      VITE_NEON_AUTH_URL: https://ep-super-tree-artr2fjt.neonauth.c-4.us-west-2.aws.neon.tech/neondb/auth
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -19,15 +19,9 @@ jobs:
       - run: npm install --ignore-scripts
       - run: npm run check
       - run: npm run build
-      - name: Deploy MyMatchIQ Worker and static assets
+      - name: Deploy visual review build
         uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy --name mymatchiq-review
-          secrets: |
-            DATABASE_URL
-            NEON_AUTH_JWKS_URL
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          NEON_AUTH_JWKS_URL: ${{ secrets.NEON_AUTH_JWKS_URL }}
