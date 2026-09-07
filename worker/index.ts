@@ -259,6 +259,48 @@ export default {
         return rows.length?json(rows[0]):json({error:'Result not available'},404);
       }
 
+      if(url.pathname==='/api/shares'&&request.method==='GET'){
+        await sql`update mymatchiq.compatibility_shares set status='expired',updated_at=now() where owner_user_id=${user.id}::uuid and status='active' and expires_at is not null and expires_at<=now()`;
+        const rows=await sql`select s.id,s.viewer_user_id,u.name viewer_name,s.status,s.expires_at,s.created_at from mymatchiq.compatibility_shares s join neon_auth."user" u on u.id=s.viewer_user_id where s.owner_user_id=${user.id}::uuid and s.status='active' order by s.created_at desc`;
+        return json({shares:rows});
+      }
+
+      if(url.pathname==='/api/shares'&&request.method==='POST'){
+        const body=await request.json() as any;
+        if(!body.viewerUserId||body.viewerUserId===user.id) return json({error:'Invalid viewer'},400);
+        const viewer=await sql`select id from neon_auth."user" where id=${body.viewerUserId}::uuid`;
+        if(!viewer.length) return json({error:'Member not found'},404);
+        const complete=await sql`select mymatchiq.user_has_complete_passport(${user.id}::uuid) as complete`;
+        if(!complete[0]?.complete) return json({error:'Complete your Compatibility Passport before sharing compatibility access.'},409);
+        let expiresAt:string|null=null;
+        if(body.expiresAt){ const d=new Date(body.expiresAt); if(Number.isNaN(d.getTime())||d.getTime()<=Date.now()) return json({error:'Invalid expiration'},400); expiresAt=d.toISOString(); }
+        const rows=await sql`insert into mymatchiq.compatibility_shares (owner_user_id,viewer_user_id,status,expires_at) values (${user.id}::uuid,${body.viewerUserId}::uuid,'active',${expiresAt}::timestamptz) on conflict (owner_user_id,viewer_user_id) do update set status='active',expires_at=excluded.expires_at,updated_at=now() returning id,viewer_user_id,status,expires_at,created_at`;
+        await sql`insert into mymatchiq.consent_events (user_id,consent_scope,action,metadata) values (${user.id}::uuid,'compatibility_share','granted',${JSON.stringify({viewerUserId:body.viewerUserId})}::jsonb)`;
+        return json({share:rows[0]},201);
+      }
+
+      const shareRevoke=url.pathname.match(/^\/api\/shares\/([0-9a-f-]+)$/i);
+      if(shareRevoke&&request.method==='DELETE'){
+        const rows=await sql`update mymatchiq.compatibility_shares set status='revoked',updated_at=now() where owner_user_id=${user.id}::uuid and viewer_user_id=${shareRevoke[1]}::uuid and status='active' returning id`;
+        if(!rows.length) return json({error:'Active share not found'},404);
+        await sql`insert into mymatchiq.consent_events (user_id,consent_scope,action,metadata) values (${user.id}::uuid,'compatibility_share','revoked',${JSON.stringify({viewerUserId:shareRevoke[1]})}::jsonb)`;
+        return json({ok:true});
+      }
+
+      if(url.pathname==='/api/privacy/export'&&request.method==='GET'){
+        const [profile,passports,answers,scans,shares,connections,legal,notifications]=await Promise.all([
+          sql`select u.id,u.name,u.email,p.tier,p.locale,p.verification_status,p.onboarding_complete,p.privacy_config,p.created_at from neon_auth."user" u join mymatchiq.profiles p on p.user_id=u.id where u.id=${user.id}::uuid`,
+          sql`select * from mymatchiq.compatibility_passports where user_id=${user.id}::uuid order by created_at`,
+          sql`select a.* from mymatchiq.assessment_answers a join mymatchiq.compatibility_passports p on p.id=a.passport_id where p.user_id=${user.id}::uuid order by a.answered_at`,
+          sql`select s.id,s.scan_type,s.status,s.requester_user_id,s.counterpart_user_id,s.created_at,r.score,r.breakdown,r.algorithm_version,r.computed_at from mymatchiq.scan_requests s left join mymatchiq.compatibility_results r on r.scan_id=s.id where ${user.id}::uuid in (s.requester_user_id,s.counterpart_user_id) order by s.created_at`,
+          sql`select owner_user_id,viewer_user_id,status,expires_at,created_at,updated_at from mymatchiq.compatibility_shares where ${user.id}::uuid in (owner_user_id,viewer_user_id) order by created_at`,
+          sql`select c.*,h.status handoff_status,h.handoff_reference from mymatchiq.connection_requests c left join mymatchiq.o2ol_handoffs h on h.connection_request_id=c.id where ${user.id}::uuid in (c.user_a,c.user_b) order by c.created_at`,
+          sql`select document_type,document_version,accepted_at from mymatchiq.legal_acceptances where user_id=${user.id}::uuid order by accepted_at`,
+          sql`select preferences,updated_at from mymatchiq.notification_preferences where user_id=${user.id}::uuid`
+        ]);
+        return json({exportedAt:new Date().toISOString(),profile:profile[0]||null,passports,answers,scans,shares,connections,legalAcceptances:legal,notificationPreferences:notifications[0]||null});
+      }
+
       if(url.pathname==='/api/verification'&&request.method==='GET'){
         const rows=await sql`select p.verification_status,v.status,v.verified_at,v.expires_at from mymatchiq.profiles p left join lateral (select status,verified_at,expires_at from mymatchiq.verification_records where user_id=p.user_id order by created_at desc limit 1) v on true where p.user_id=${user.id}::uuid`;
         return json({verification:rows[0]||{verification_status:'unverified'}});

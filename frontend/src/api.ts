@@ -44,6 +44,10 @@ export const api = {
     body: JSON.stringify({ action }),
   }),
   scanResult: (scanId: string) => request<any>(`/api/scans/${scanId}/result`),
+  shares: () => request<any>('/api/shares'),
+  createShare: (viewerUserId: string, expiresAt?: string) => request<any>('/api/shares', { method: 'POST', body: JSON.stringify({ viewerUserId, expiresAt }) }),
+  revokeShare: (viewerUserId: string) => request<any>(`/api/shares/${viewerUserId}`, { method: 'DELETE' }),
+  privacyExport: () => request<any>('/api/privacy/export'),
   verification: () => request<any>('/api/verification'),
   connections: () => request<any>('/api/connections'),
   createConnection: (otherUserId: string, scanId: string) => request<any>('/api/connections', {

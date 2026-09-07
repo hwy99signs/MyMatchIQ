@@ -83,6 +83,8 @@ export function ProductApp() {
   const [connections, setConnections] = useState<any[]>([]);
   const [singleTarget, setSingleTarget] = useState('');
   const [dualTarget, setDualTarget] = useState('');
+  const [shareTarget, setShareTarget] = useState('');
+  const [shares, setShares] = useState<any[]>([]);
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -127,7 +129,7 @@ export function ProductApp() {
     finally{ setBusy(false); }
   }
 
-  useEffect(() => { if (tab === 'passport') loadPassport(); if (tab === 'scans') loadScans(); }, [tab]);
+  useEffect(() => { if (tab === 'passport') loadPassport(); if (tab === 'scans') loadScans(); if (tab === 'settings') loadShares(); }, [tab]);
 
   async function saveAnswer(questionId:string, code:string) {
     setAnswers(v => ({...v,[questionId]:code}));
@@ -161,6 +163,36 @@ export function ProductApp() {
     setBusy(true); setError('');
     try { const r = await api.respondInvitation(id, action); setNotice(action === 'accept' ? (r.result ? `Dual Scan complete: ${r.result.score}% compatibility.` : 'Invitation accepted.') : 'Invitation declined.'); await loadScans(); }
     catch(e:any){ setError(e.message); }
+    finally{ setBusy(false); }
+  }
+
+  async function loadShares() {
+    try { const r = await api.shares(); setShares(r.shares || []); } catch(e:any) { setError(e.message); }
+  }
+
+  async function createShare() {
+    if(!shareTarget.trim()) return;
+    setBusy(true); setError(''); setNotice('');
+    try { await api.createShare(shareTarget.trim()); setShareTarget(''); setNotice('Compatibility sharing access granted. You can revoke it at any time.'); await loadShares(); }
+    catch(e:any){ setError(e.message); }
+    finally{ setBusy(false); }
+  }
+
+  async function revokeShare(viewerUserId:string) {
+    setBusy(true); setError('');
+    try { await api.revokeShare(viewerUserId); setNotice('Compatibility sharing access revoked.'); await loadShares(); }
+    catch(e:any){ setError(e.message); }
+    finally{ setBusy(false); }
+  }
+
+  async function downloadPrivacyExport() {
+    setBusy(true); setError('');
+    try {
+      const data=await api.privacyExport();
+      const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+      const link=document.createElement('a'); link.href=URL.createObjectURL(blob); link.download=`mymatchiq-data-${new Date().toISOString().slice(0,10)}.json`; link.click(); URL.revokeObjectURL(link.href);
+      setNotice('Your MyMatchIQ data export was prepared.');
+    } catch(e:any){ setError(e.message); }
     finally{ setBusy(false); }
   }
 
@@ -222,6 +254,8 @@ export function ProductApp() {
 
       {tab === 'settings' && <main className="miq-grid"><section className="miq-card half"><h2>Language</h2><div className="miq-field"><label>Language</label><select value={language} onChange={e=>updateLanguage(e.target.value as Language)}><option value="en">English</option><option value="es">Español</option><option value="fr">Français</option></select></div></section>
         <section className="miq-card half"><h2>Privacy Controls</h2><p className="miq-muted">Compatibility Passport data remains private by default. Single Scans do not expose your raw answers. Dual Scans require consent.</p><div className="miq-actions"><button className="miq-button secondary" onClick={async()=>{try{await api.settings({privacyConfig:{passportPrivate:true,shareResultsOnlyWithConsent:true}});setNotice('Privacy preferences saved.')}catch(e:any){setError(e.message)}}}>Save Privacy Defaults</button></div></section>
+        <section className="miq-card"><h2>Compatibility Sharing</h2><p className="miq-muted">Your Passport stays private. Grant a specific MyMatchIQ member permission to receive compatibility-sharing access, then revoke that permission whenever you choose.</p><div className="miq-field"><label>Member ID</label><input value={shareTarget} onChange={e=>setShareTarget(e.target.value)} placeholder="User ID" /></div><div className="miq-actions"><button className="miq-button" disabled={busy || passport?.status!=='complete'} onClick={createShare}>Grant Access</button></div><div className="miq-list">{!shares.length&&<p className="miq-muted">You have not granted compatibility-sharing access to anyone.</p>}{shares.map(s=><div className="miq-row" key={s.id}><div><strong>{s.viewer_name || s.viewer_user_id}</strong><span className="miq-muted">Active compatibility access{s.expires_at ? ` • expires ${new Date(s.expires_at).toLocaleString()}` : ''}</span></div><button className="miq-button danger" onClick={()=>revokeShare(s.viewer_user_id)}>Revoke</button></div>)}</div></section>
+        <section className="miq-card half"><h2>Your Data</h2><p className="miq-muted">Download a portable JSON copy of the MyMatchIQ information associated with your account, including Passport answers, scan records, sharing permissions, legal acceptance and connection state.</p><div className="miq-actions"><button className="miq-button secondary" disabled={busy} onClick={downloadPrivacyExport}>Download My Data</button></div></section>
         <section className="miq-card"><h2>Legal & Safety</h2><p className="miq-muted">The recovered MyMatchIQ Terms and Privacy Policy remain part of the approved product. Acceptance is versioned in your account record.</p><div className="miq-actions"><button className="miq-button secondary" onClick={()=>api.acceptLegal('terms','2025-12-13').then(()=>setNotice('Terms acceptance recorded.')).catch((e:any)=>setError(e.message))}>Accept Current Terms</button><button className="miq-button secondary" onClick={()=>api.acceptLegal('privacy','2025-12-13').then(()=>setNotice('Privacy acceptance recorded.')).catch((e:any)=>setError(e.message))}>Accept Current Privacy Policy</button></div></section>
       </main>}
       <footer className="miq-footer-note">MyMatchIQ • Compatibility intelligence, not a traditional dating app • No Chat • No DMs</footer>
