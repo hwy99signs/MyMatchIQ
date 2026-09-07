@@ -1,6 +1,9 @@
 name: Deploy MyMatchIQ to Cloudflare
 
 on:
+  push:
+    branches:
+      - build/complete-mymatchiq-20260906
   workflow_dispatch:
 
 jobs:
@@ -21,7 +24,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy
+          command: deploy --name mymatchiq-review
           secrets: |
             DATABASE_URL
             NEON_AUTH_JWKS_URL
