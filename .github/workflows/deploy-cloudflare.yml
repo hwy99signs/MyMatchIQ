@@ -13,9 +13,14 @@ jobs:
           node-version: 22
       - run: npm install --ignore-scripts
       - run: npm run check
-      - name: Deploy Worker
-        uses: cloudflare/wrangler-action@v3
+      - run: npm run build
+      - name: Deploy MyMatchIQ Worker and static assets
+        uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy
+          secrets: |
+            DATABASE_URL
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
