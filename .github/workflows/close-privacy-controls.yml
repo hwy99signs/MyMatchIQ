@@ -1,0 +1,32 @@
+name: Close MyMatchIQ privacy control gaps
+
+on:
+  push:
+    branches:
+      - build/complete-mymatchiq-20260906
+    paths:
+      - automation/close-privacy-controls.trigger
+      - automation/close_privacy_controls.py
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: build/complete-mymatchiq-20260906
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python automation/close_privacy_controls.py
+      - name: Commit completed controls
+        run: |
+          git config user.name "MyMatchIQ Build Bot"
+          git config user.email "actions@github.com"
+          git add worker/index.ts frontend/src/api.ts frontend/src/ProductApp.tsx
+          git diff --cached --quiet && exit 0
+          git commit -m "Complete user-controlled sharing and privacy export"
+          git push origin HEAD:build/complete-mymatchiq-20260906

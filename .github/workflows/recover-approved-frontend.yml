@@ -1,0 +1,53 @@
+name: Recover approved MyMatchIQ frontend
+
+on:
+  push:
+    branches:
+      - build/complete-mymatchiq-20260906
+    paths:
+      - automation/recover-approved-frontend.trigger
+
+permissions:
+  contents: write
+
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out official MyMatchIQ repo
+        uses: actions/checkout@v4
+        with:
+          ref: build/complete-mymatchiq-20260906
+          fetch-depth: 0
+
+      - name: Check out intact approved historical MyMatchIQ source
+        uses: actions/checkout@v4
+        with:
+          repository: hwy99signs/mymatchiq-coming-soon
+          ref: 29fef13f4cfd06f0c2156f47a3e4d245065de645
+          path: _legacy_mymatchiq
+
+      - name: Preserve exact historical source and approved visual assets
+        run: |
+          rm -rf recovery/approved-marketing-20251214
+          mkdir -p recovery/approved-marketing-20251214
+          cp -a _legacy_mymatchiq/. recovery/approved-marketing-20251214/
+          rm -rf recovery/approved-marketing-20251214/.git
+
+          mkdir -p frontend/public/assets
+          cp _legacy_mymatchiq/assets/mymatchiq-logo.png frontend/public/assets/mymatchiq-logo.png
+          cp _legacy_mymatchiq/assets/mymatchiq-hero-bg.png frontend/public/assets/mymatchiq-hero-bg.png
+
+          rm -rf _legacy_mymatchiq
+
+      - name: Commit recovered approved source
+        run: |
+          git config user.name "MyMatchIQ Recovery Bot"
+          git config user.email "actions@github.com"
+          git add recovery/approved-marketing-20251214 frontend/public/assets
+          if git diff --cached --quiet; then
+            echo "Approved source already recovered."
+            exit 0
+          fi
+          git commit -m "Recover exact approved historical MyMatchIQ frontend and assets"
+          git push origin HEAD:build/complete-mymatchiq-20260906
