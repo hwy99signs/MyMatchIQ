@@ -1,0 +1,173 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+body {
+  color: #2c2c2c;
+  background: #ffffff;
+}
+
+/* HERO */
+.hero {
+  position: relative;
+  min-height: 100vh;
+  background: url("assets/mymatchiq-hero-bg.png") center/cover no-repeat;
+  color: white;
+}
+
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(59, 30, 90, 0.8), rgba(191, 167, 227, 0.8));
+}
+
+.nav {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+}
+
+.logo {
+  height: 110px;
+}
+
+.lang-toggle {
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 700px;
+  padding: 6rem 2rem;
+}
+
+.hero h1 {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.hero p {
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+}
+
+.hero-cta a {
+  margin-right: 1rem;
+}
+
+/* BUTTONS */
+.btn-primary {
+  background: #ffffff;
+  color: #3b1e5a;
+  padding: 0.8rem 1.6rem;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.btn-secondary {
+  color: #ffffff;
+  text-decoration: underline;
+}
+
+/* SECTIONS */
+section {
+  padding: 4rem 2rem;
+  width: 100%;
+}
+
+h2 {
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+/* TRUST */
+.trust-list {
+  list-style: none;
+}
+
+.trust-list li {
+  margin-bottom: 1rem;
+}
+
+/* HOW IT WORKS */
+.steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2rem;
+}
+
+.step span {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #7b4dbf;
+}
+
+/* WAITLIST */
+.waitlist form {
+  max-width: 400px;
+  margin-top: 1.5rem;
+}
+
+.waitlist input {
+  width: 100%;
+  padding: 0.8rem;
+  margin-bottom: 1rem;
+}
+
+.waitlist button {
+  width: 100%;
+  padding: 0.8rem;
+  background: #3b1e5a;
+  color: white;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+/* FOOTER */
+.footer {
+  text-align: center;
+  padding: 2rem;
+  background: #f4f4f4;
+}
+
+.footer a {
+  color: #3b1e5a;
+  text-decoration: none;
+}
+
+.tagline {
+  margin-top: 0.5rem;
+  font-style: italic;
+}
+
+@media (max-width: 768px) {
+  .hero-content {
+    max-width: none;
+    width: 100%;
+    padding: 3rem 1.25rem;
+  }
+
+  #hero {
+    padding: 2rem 1.5rem;
+  }
+
+  .hero-content,
+  #hero h1 {
+    max-width: 100%;
+  }
+
+  #hero h1 {
+    font-size: 2.4rem;
+    line-height: 1.2;
+  }
+}
