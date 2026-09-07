@@ -4,6 +4,12 @@
   "main": "worker/index.ts",
   "compatibility_date": "2026-09-06",
   "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
   "vars": {
     "NEON_AUTH_JWKS_URL": "https://ep-solitary-breeze-arjr0a91.neonauth.c-4.us-west-2.aws.neon.tech/neondb/auth/.well-known/jwks.json"
   }
