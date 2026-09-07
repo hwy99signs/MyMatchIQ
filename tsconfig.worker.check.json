@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.worker.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@neondatabase/serverless": ["worker/neon-type-shim.d.ts"]
+    }
+  }
+}
