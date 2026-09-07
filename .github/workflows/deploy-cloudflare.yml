@@ -19,9 +19,5 @@ jobs:
       - run: npm install --ignore-scripts
       - run: npm run check
       - run: npm run build
-      - name: Deploy visual review build
-        uses: cloudflare/wrangler-action@v4
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy --name mymatchiq-review
+      - name: Deploy temporary Cloudflare review build
+        run: npx wrangler deploy --name mymatchiq-review --temporary
