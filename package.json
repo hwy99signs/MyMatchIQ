@@ -4,7 +4,7 @@
   "version": "0.2.0",
   "type": "module",
   "scripts": {
-    "check": "tsc -p tsconfig.worker.json --noEmit && tsc -p tsconfig.frontend.json --noEmit",
+    "check": "tsc -p tsconfig.worker.check.json --noEmit && tsc -p tsconfig.frontend.json --noEmit",
     "build": "vite build",
     "deploy": "npm run build && wrangler deploy",
     "dev": "vite"
